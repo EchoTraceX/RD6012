@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RD6012 Power Desk · 原型</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+/* ============================================================
+   设计令牌（与 WPF ThemeManager 两套主题对应）
+   ============================================================ */
+:root {
+    --radius-window: 14px;
+    --radius-panel: 16px;
+    --radius-card: 12px;
+    --radius-btn: 10px;
+    --radius-pill: 999px;
+    --gap: 16px;
+    --transition: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="dark"] {
+    --bg: #10151D;
+    --panel: #161D27;
+    --panel-soft: #0F151D;
+    --field: #121923;
+    --card: #121B24;
+    --border: #2A3647;
+    --border-strong: #27303D;
+    --title: #F4F8FB;
+    --text: #D6DEE6;
+    --muted: #8A98A8;
+    --accent: #3DC3D8;
+    --success: #4FD28E;
+    --warn: #FFB347;
+    --danger: #FF6B6B;
+    --titlebar: #0E141C;
+    --shadow: 0 12px 40px rgba(0,0,0,0.45);
+    --chart-grid: rgba(138,152,168,0.12);
+}
+
+[data-theme="light"] {
+    --bg: #F5F7FA;
+    --panel: #FFFFFF;
+    --panel-soft: #EEF2F7;
+    --field: #FFFFFF;
+    --card: #F8FAFC;
+    --border: #D0D7DE;
+    --border-strong: #E1E4E8;
+    --title: #1F2937;
+    --text: #374151;
+    --muted: #6B7280;
+    --accent: #0891B2;
+    --success: #059669;
+    --warn: #D97706;
+    --danger: #DC2626;
+    --titlebar: #F3F6FA;
+    --shadow: 0 12px 40px rgba(170,183,200,0.25);
+    --chart-grid: rgba(100,116,139,0.14);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+    height: 100%;
+    font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.45;
+    transition: background var(--transition), color var(--transition);
+}
+
+.app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 14px;
+    gap: var(--gap);
+}
+
+/* ============================================================
+   标题栏
+   ============================================================ */
+.titlebar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--titlebar);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-panel);
+    padding: 14px 18px;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand-logo {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, var(--accent), transparent 70%), var(--card);
+    border: 1.5px solid var(--border);
+    display: grid;
+    place-items: center;
+    color: var(--accent);
+    flex-shrink: 0;
+}
+
+.brand-text h1 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--title);
+    letter-spacing: 0.3px;
+}
+
+.brand-text .sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+}
+
+.status-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-left: 10px;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    padding: 5px 11px;
+    font-size: 12px;
+    color: var(--text);
+    white-space: nowrap;
+}
+
+.badge .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--danger);
+    box-shadow: 0 0 6px var(--danger);
+}
+
+.badge.online .dot { background: var(--success); box-shadow: 0 0 6px var(--success); }
+
+.badge .label { color: var(--muted); }
+
+.titlebar-spacer { flex: 1; }
+
+.title-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* ============================================================
+   按钮
+   ============================================================ */
+.btn {
+    border: 1px solid var(--border);
+    background: var(--field);
+    color: var(--text);
+    padding: 8px 14px;
+    border-radius: var(--radius-btn);
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.btn:hover { border-color: var(--accent); transform: translateY(-1px); }
+.btn:active { transform: translateY(0) scale(0.98); }
+
+.btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #001417;
+    font-weight: 600;
+}
+[data-theme="light"] .btn-primary { color: #fff; }
+.btn-primary:hover { opacity: 0.88; border-color: var(--accent); }
+
+.btn-success {
+    background: rgba(79,210,142,0.15);
+    border-color: var(--success);
+    color: var(--success);
+}
+.btn-success.on {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: #fff;
+}
+
+.btn-warn {
+    background: rgba(255,179,71,0.15);
+    border-color: var(--warn);
+    color: var(--warn);
+}
+
+.btn-icon {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    justify-content: center;
+}
+
+.btn-block { width: 100%; justify-content: center; }
+
+/* ============================================================
+   主布局：左侧控制 + 中间监测 + 右侧图表
+   ============================================================ */
+.main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: var(--gap);
+    min-height: 0;
+}
+
+/* 左侧控制面板跨满两行；右侧上=监测，下=波形 */
+.control-panel { grid-column: 1; grid-row: 1 / 3; }
+.monitor-panel { grid-column: 2; grid-row: 1; }
+.chart-panel   { grid-column: 2; grid-row: 2; }
+
+.panel {
+    background: var(--panel);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-panel);
+    padding: 16px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.panel-scroll { overflow-y: auto; padding-right: 4px; }
+.panel-scroll::-webkit-scrollbar { width: 8px; }
+.panel-scroll::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+.section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--title);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.section-title::before {
+    content: "";
+    width: 3px;
+    height: 14px;
+    background: var(--accent);
+    border-radius: 2px;
+}
+
+.section-desc {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 12px;
+}
+
+.divider {
+    height: 1px;
+    background: var(--border);
+    margin: 16px 0;
+}
+
+/* ============================================================
+   表单
+   ============================================================ */
+.field { margin-bottom: 12px; }
+.field-label {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 6px;
+}
+.input, .select {
+    width: 100%;
+    background: var(--field);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-btn);
+    color: var(--title);
+    padding: 9px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color var(--transition);
+}
+.input:focus, .select:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+.input-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* ============================================================
+   预设网格
+   ============================================================ */
+.preset-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+.preset-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-btn);
+    padding: 10px 8px;
+    cursor: pointer;
+    transition: all var(--transition);
+    text-align: center;
+}
+.preset-btn:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+}
+.preset-btn .v { font-size: 13px; font-weight: 600; color: var(--title); }
+.preset-btn .t { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+.preset-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+}
+.preset-row .preset-btn { padding: 7px 4px; }
+.preset-row .preset-btn .v { font-size: 12px; }
+.preset-row .preset-btn .t { display: none; }
+
+/* ============================================================
+   中间监测面板
+   ============================================================ */
+/* ============================================================
+   监测面板（宽行布局）
+   ============================================================ */
+.monitor-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 14px;
+}
+.monitor-row {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.monitor-row.three { grid-template-columns: 1.2fr 2fr 1fr; }
+.monitor-row.two   { grid-template-columns: 1fr 1fr; }
+
+.metric-hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+.metric-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+}
+.metric-card::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+}
+.metric-card.voltage::before { background: var(--accent); }
+.metric-card.current::before { background: var(--success); }
+.metric-card.power::before   { background: var(--warn); }
+.metric-card.input::before   { background: var(--muted); }
+
+.metric-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.metric-value {
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--title);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+.metric-unit {
+    font-size: 14px;
+    font-weight: 500;
+    margin-left: 4px;
+}
+.metric-card.voltage .metric-unit { color: var(--accent); }
+.metric-card.current .metric-unit { color: var(--success); }
+.metric-card.power .metric-unit   { color: var(--warn); }
+.metric-card.input .metric-unit   { color: var(--muted); }
+.metric-hint { font-size: 10px; color: var(--muted); margin-top: 6px; }
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+.status-tile {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-btn);
+    padding: 10px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.status-tile .k { font-size: 11px; color: var(--muted); }
+.status-tile .v { font-size: 13px; font-weight: 600; color: var(--title); }
+.status-tile .v.ok    { color: var(--success); }
+.status-tile .v.warn  { color: var(--warn); }
+.status-tile .v.danger{ color: var(--danger); }
+
+/* 温度条 */
+.temp-bar {
+    height: 8px;
+    background: var(--field);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 6px;
+}
+.temp-bar > div {
+    height: 100%;
+    background: linear-gradient(90deg, var(--success), var(--warn), var(--danger));
+    width: 30%;
+    transition: width var(--transition);
+}
+
+/* ============================================================
+   设备信息
+   ============================================================ */
+.info-list {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+.info-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-btn);
+    padding: 8px 10px;
+}
+.info-item .k { font-size: 10px; color: var(--muted); }
+.info-item .v { font-size: 13px; color: var(--title); font-weight: 600; margin-top: 2px; }
+
+/* ============================================================
+   右侧图表面板
+   ============================================================ */
+.chart-toolbar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+    align-items: center;
+}
+.chart-toolbar .section-title { margin-bottom: 0; }
+.chart-toolbar .spacer { flex: 1; }
+
+.chart-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin: 10px 0;
+}
+.stat-chip {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-btn);
+    padding: 8px 10px;
+}
+.stat-chip .k { font-size: 10px; color: var(--muted); }
+.stat-chip .v { font-size: 14px; font-weight: 600; margin-top: 2px; }
+.stat-chip.voltage .v { color: var(--accent); }
+.stat-chip.current .v { color: var(--success); }
+.stat-chip.power .v   { color: var(--warn); }
+
+.chart-wrap {
+    flex: 1;
+    background: var(--panel-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: 12px;
+    min-height: 220px;
+    position: relative;
+}
+
+/* 录制指示 */
+.rec-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--danger);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.rec-indicator.active { opacity: 1; }
+.rec-indicator .blink {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--danger);
+    animation: blink 1s ease-in-out infinite;
+}
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+}
+
+/* ============================================================
+   模态弹窗（串口设置）
+   ============================================================ */
+.modal-mask {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    backdrop-filter: blur(3px);
+}
+.modal-mask.show { display: flex; }
+
+.modal {
+    width: 440px;
+    max-width: 92vw;
+    background: var(--panel);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-panel);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+.modal-head {
+    background: var(--titlebar);
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border-strong);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.modal-head h3 { font-size: 16px; color: var(--title); }
+.modal-head .sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.modal-body { padding: 18px; }
+.modal-foot {
+    background: var(--titlebar);
+    padding: 14px 18px;
+    border-top: 1px solid var(--border-strong);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* ============================================================
+   Toast 提示
+   ============================================================ */
+.toast-wrap {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 200;
+}
+.toast {
+    background: var(--panel);
+    border: 1px solid var(--border-strong);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius-btn);
+    padding: 10px 14px;
+    color: var(--text);
+    font-size: 13px;
+    box-shadow: var(--shadow);
+    animation: slideIn 0.25s ease, fadeOut 0.3s ease 2.4s forwards;
+    max-width: 320px;
+}
+.toast.success { border-left-color: var(--success); }
+.toast.warn    { border-left-color: var(--warn); }
+.toast.danger  { border-left-color: var(--danger); }
+@keyframes slideIn { from { transform: translateX(40px); opacity: 0; } }
+@keyframes fadeOut { to { opacity: 0; transform: translateX(40px); } }
+
+/* ============================================================
+   响应式
+   ============================================================ */
+@media (max-width: 1100px) {
+    .main {
+        grid-template-columns: 280px 1fr;
+    }
+}
+@media (max-width: 860px) {
+    .main {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto minmax(0, 1fr);
+    }
+    .control-panel { grid-column: 1; grid-row: 1; }
+    .monitor-panel { grid-column: 1; grid-row: 2; }
+    .chart-panel   { grid-column: 1; grid-row: 3; }
+    .status-badges { display: none; }
+}
+
+.kbd {
+    display: inline-block;
+    background: var(--field);
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 10px;
+    font-family: monospace;
+    color: var(--muted);
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+    <!-- ==================== 标题栏 ==================== -->
+    <div class="titlebar">
+        <div class="brand">
+            <div class="brand-logo">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                    <path d="M3 12 C 7 4, 11 4, 13 12 S 19 20, 21 12"/>
+                </svg>
+            </div>
+            <div class="brand-text">
+                <h1>RD6012 Power Desk</h1>
+                <div class="sub">Riden 数控电源监测与控制 · 原型</div>
+            </div>
+        </div>
+
+        <div class="status-badges">
+            <span class="badge" id="connBadge">
+                <span class="dot"></span>
+                <span class="label">连接：</span>
+                <span id="connText">未连接</span>
+            </span>
+            <span class="badge"><span class="label">序列号</span> <span id="serialText">--</span></span>
+            <span class="badge"><span class="label">刷新率</span> <span id="rateText">0.0 Hz</span></span>
+        </div>
+
+        <div class="titlebar-spacer"></div>
+
+        <div class="title-actions">
+            <button class="btn btn-icon" id="themeBtn" title="切换主题">
+                <span id="themeIcon">🌙</span>
+            </button>
+            <button class="btn" id="settingsBtn" title="串口设置 (Ctrl+S)">⚙ 串口</button>
+            <button class="btn" id="folderBtn" title="打开 CSV 记录文件夹">📁 记录</button>
+        </div>
+    </div>
+
+    <!-- ==================== 主体三栏 ==================== -->
+    <div class="main">
+
+        <!-- ---------- 左侧：控制面板（跨两行） ---------- -->
+        <div class="panel control-panel panel-scroll">
+            <div class="section-title">输出设定</div>
+            <div class="section-desc">写入电压 / 电流设定寄存器</div>
+
+            <div class="input-pair">
+                <div class="field">
+                    <label class="field-label">目标电压 (V)</label>
+                    <input type="number" class="input" id="setVoltage" value="12.00" step="0.01" min="0">
+                </div>
+                <div class="field">
+                    <label class="field-label">目标电流 (A)</label>
+                    <input type="number" class="input" id="setCurrent" value="1.000" step="0.001" min="0">
+                </div>
+            </div>
+            <button class="btn btn-primary btn-block" id="applyBtn">应用设定</button>
+
+            <div class="divider"></div>
+
+            <div class="section-title">快捷开关</div>
+            <div class="section-desc">空格 = 输出 · Ctrl+L = 键盘锁</div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <button class="btn btn-success btn-block" id="outputBtn">⏻ 开启输出</button>
+                <button class="btn btn-block" id="lockBtn">🔒 锁定</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="section-title">组合预设</div>
+            <div class="preset-grid" id="comboPresets"></div>
+
+            <div class="divider"></div>
+
+            <div class="section-title">电压快捷</div>
+            <div class="preset-row" id="vPresets"></div>
+
+            <div class="section-title" style="margin-top:12px;">电流快捷</div>
+            <div class="preset-row" id="cPresets"></div>
+        </div>
+
+        <!-- ---------- 中间：监测面板（宽行，上方一行） ---------- -->
+        <div class="panel monitor-panel panel-scroll">
+            <div class="section-title">实时监测</div>
+            <div class="section-desc">输出端口实时电气量</div>
+
+            <!-- 四个核心电气量横排一整行 -->
+            <div class="monitor-grid">
+                <div class="metric-card voltage">
+                    <div class="metric-label">输出电压</div>
+                    <div><span class="metric-value" id="vOut">0.00</span><span class="metric-unit">V</span></div>
+                    <div class="metric-hint">实时输出端电压</div>
+                </div>
+                <div class="metric-card current">
+                    <div class="metric-label">输出电流</div>
+                    <div><span class="metric-value" id="iOut">0.000</span><span class="metric-unit">A</span></div>
+                    <div class="metric-hint">恒压/恒流实时电流</div>
+                </div>
+                <div class="metric-card power">
+                    <div class="metric-label">输出功率</div>
+                    <div><span class="metric-value" id="pOut">0.00</span><span class="metric-unit">W</span></div>
+                    <div class="metric-hint">由电压 × 电流计算</div>
+                </div>
+                <div class="metric-card input">
+                    <div class="metric-label">输入电压</div>
+                    <div><span class="metric-value" id="vIn">0.00</span><span class="metric-unit">V</span></div>
+                    <div class="metric-hint">设备侧输入端电压</div>
+                </div>
+            </div>
+
+            <!-- 状态 / 温度 / 设备信息 横向铺开 -->
+            <div class="monitor-row three">
+                <div>
+                    <div class="section-title">运行状态</div>
+                    <div class="status-grid" style="grid-template-columns: 1fr 1fr;">
+                        <div class="status-tile"><span class="k">模式</span><span class="v warn" id="modeVal">CV 恒压</span></div>
+                        <div class="status-tile"><span class="k">输出</span><span class="v ok" id="outStat">关闭</span></div>
+                        <div class="status-tile"><span class="k">保护</span><span class="v ok" id="protectVal">正常</span></div>
+                        <div class="status-tile"><span class="k">键盘锁</span><span class="v" id="lockStat">未锁定</span></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="section-title">系统温度</div>
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <span class="metric-value" id="tempVal" style="font-size:22px; color:var(--warn);">-- °C</span>
+                        <div style="flex:1;">
+                            <div class="temp-bar"><div id="tempBar"></div></div>
+                            <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--muted); margin-top:3px;">
+                                <span>0°C</span><span>50°C</span><span>100°C</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="section-title">设备信息</div>
+                    <div class="info-list" style="grid-template-columns: 1fr;">
+                        <div class="info-item"><div class="k">型号 / 固件</div><div class="v"><span id="modelVal">--</span> / <span id="fwVal">--</span></div></div>
+                        <div class="info-item"><div class="k">串口 / 波特率</div><div class="v"><span id="portVal">COM3</span> / <span id="baudVal">115200</span></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ---------- 右侧：图表面板 ---------- -->
+        <div class="panel chart-panel">
+            <div class="chart-toolbar">
+                <div class="section-title">实时趋势</div>
+                <div class="spacer"></div>
+                <span class="rec-indicator" id="recIndicator">
+                    <span class="blink"></span> 录制中
+                </span>
+                <button class="btn" id="recordBtn">⏺ 开始记录</button>
+                <button class="btn" id="pauseBtn">⏸ 暂停</button>
+                <button class="btn" id="clearBtn">🗑 清空</button>
+            </div>
+
+            <div class="chart-stats">
+                <div class="stat-chip voltage"><div class="k">电压峰值</div><div class="v" id="maxV">0.00 V</div></div>
+                <div class="stat-chip current"><div class="k">电流峰值</div><div class="v" id="maxI">0.000 A</div></div>
+                <div class="stat-chip power"><div class="k">功率峰值</div><div class="v" id="maxP">0.00 W</div></div>
+            </div>
+
+            <div class="chart-wrap">
+                <canvas id="chart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== 串口设置弹窗 ==================== -->
+<div class="modal-mask" id="settingsModal">
+    <div class="modal">
+        <div class="modal-head">
+            <div>
+                <h3>连接设置</h3>
+                <div class="sub">选择正确的串口与通信参数</div>
+            </div>
+            <button class="btn btn-icon" id="closeModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="field">
+                <label class="field-label">串口号</label>
+                <select class="select" id="portSelect">
+                    <option>COM3</option><option>COM4</option><option>COM5</option>
+                    <option>COM6</option><option>COM7</option><option>COM8</option>
+                </select>
+            </div>
+            <div class="input-pair">
+                <div class="field">
+                    <label class="field-label">波特率</label>
+                    <select class="select" id="baudSelect">
+                        <option>9600</option><option>19200</option><option>38400</option>
+                        <option>57600</option><option selected>115200</option><option>230400</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="field-label">设备地址</label>
+                    <input type="number" class="input" id="addrInput" value="1" min="1">
+                </div>
+            </div>
+            <div class="input-pair">
+                <div class="field">
+                    <label class="field-label">数据位</label>
+                    <select class="select" id="dataBitsSelect">
+                        <option>7</option><option selected>8</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="field-label">校验位</label>
+                    <select class="select" id="paritySelect">
+                        <option selected>无</option><option>奇校验</option><option>偶校验</option>
+                    </select>
+                </div>
+            </div>
+            <div class="field">
+                <label class="field-label">停止位</label>
+                <select class="select" id="stopBitsSelect">
+                    <option selected>1</option><option>2</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-foot">
+            <button class="btn" id="cancelModal">取消</button>
+            <button class="btn btn-primary" id="saveModal">✓ 保存并连接</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* ============================================================
+   原型模拟数据 & 状态（无硬件交互，纯演示）
+   ============================================================ */
+const state = {
+    connected: false,
+    outputOn: false,
+    locked: false,
+    recording: false,
+    chartPaused: false,
+    dark: true,
+    setV: 12.0,
+    setC: 1.0,
+    vOut: 0, iOut: 0, pOut: 0, vIn: 52.0, temp: 32,
+    mode: 'CV', protect: 0,
+    maxV: 0, maxI: 0, maxP: 0,
+    rate: 0,
+    port: 'COM3', baud: 115200, addr: 1
+};
+
+/* 预设（与 WPF PresetProfiles 完全一致） */
+const comboPresets = [
+    { name: '低压测试', v: 1.8, c: 0.5 },
+    { name: '单片机',   v: 3.3, c: 1.0 },
+    { name: 'USB 设备', v: 5.0, c: 2.0 },
+    { name: '快充协议', v: 9.0, c: 2.0 },
+    { name: '12V 轻载', v: 12.0, c: 1.0 },
+    { name: '常用供电', v: 12.0, c: 3.0 },
+    { name: '风扇/电机', v: 15.0, c: 2.0 },
+    { name: '19V 设备', v: 19.0, c: 3.0 },
+    { name: '工控 24V', v: 24.0, c: 2.0 },
+    { name: '高压待机', v: 48.0, c: 0.5 }
+];
+const vQuick = [3.3, 5, 12, 24, 48];
+const cQuick = [0.5, 1.0, 2.0, 3.0, 5.0];
+
+const protectMap = { 0: ['正常', 'ok'], 1: ['OVP 过压', 'danger'], 2: ['OCP 过流', 'danger'], 3: ['OTP 过温', 'danger'] };
+
+/* ---------- DOM 引用 ---------- */
+const $ = id => document.getElementById(id);
+const el = {
+    connBadge: $('connBadge'), connText: $('connText'), serialText: $('serialText'), rateText: $('rateText'),
+    themeBtn: $('themeBtn'), themeIcon: $('themeIcon'), settingsBtn: $('settingsBtn'), folderBtn: $('folderBtn'),
+    setVoltage: $('setVoltage'), setCurrent: $('setCurrent'), applyBtn: $('applyBtn'),
+    outputBtn: $('outputBtn'), lockBtn: $('lockBtn'),
+    vOut: $('vOut'), iOut: $('iOut'), pOut: $('pOut'), vIn: $('vIn'),
+    modeVal: $('modeVal'), outStat: $('outStat'), protectVal: $('protectVal'), lockStat: $('lockStat'),
+    tempVal: $('tempVal'), tempBar: $('tempBar'),
+    modelVal: $('modelVal'), fwVal: $('fwVal'), portVal: $('portVal'), baudVal: $('baudVal'),
+    recordBtn: $('recordBtn'), pauseBtn: $('pauseBtn'), clearBtn: $('clearBtn'),
+    recIndicator: $('recIndicator'),
+    maxV: $('maxV'), maxI: $('maxI'), maxP: $('maxP'),
+    comboPresets: $('comboPresets'), vPresets: $('vPresets'), cPresets: $('cPresets')
+};
+
+/* ---------- Toast ---------- */
+function toast(msg, type = '') {
+    const t = document.createElement('div');
+    t.className = 'toast ' + type;
+    t.textContent = msg;
+    $('toastWrap').appendChild(t);
+    setTimeout(() => t.remove(), 2800);
+}
+
+/* ---------- 渲染预设 ---------- */
+function renderPresets() {
+    el.comboPresets.innerHTML = comboPresets.map((p, i) =>
+        `<div class="preset-btn" data-i="${i}"><div class="v">${p.v}V / ${p.c}A</div><div class="t">${p.name}</div></div>`
+    ).join('');
+    el.comboPresets.querySelectorAll('.preset-btn').forEach(b => {
+        b.onclick = () => {
+            const p = comboPresets[b.dataset.i];
+            state.setV = p.v; state.setC = p.c;
+            el.setVoltage.value = p.v.toFixed(2);
+            el.setCurrent.value = p.c.toFixed(3);
+            toast(`已套用预设：${p.name}`, 'success');
+        };
+    });
+
+    el.vPresets.innerHTML = vQuick.map(v =>
+        `<div class="preset-btn" data-v="${v}"><div class="v">${v}V</div></div>`
+    ).join('');
+    el.vPresets.querySelectorAll('.preset-btn').forEach(b => {
+        b.onclick = () => { state.setV = parseFloat(b.dataset.v); el.setVoltage.value = state.setV.toFixed(2); };
+    });
+
+    el.cPresets.innerHTML = cQuick.map(c =>
+        `<div class="preset-btn" data-c="${c}"><div class="v">${c}A</div></div>`
+    ).join('');
+    el.cPresets.querySelectorAll('.preset-btn').forEach(b => {
+        b.onclick = () => { state.setC = parseFloat(b.dataset.c); el.setCurrent.value = state.setC.toFixed(3); };
+    });
+}
+
+/* ---------- 图表 ---------- */
+let chart;
+function makeChart() {
+    const ctx = $('chart').getContext('2d');
+    chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [
+                { label: '电压 (V)', data: [], borderColor: '#3DC3D8', backgroundColor: 'rgba(61,195,216,0.08)', tension: 0.35, borderWidth: 2, pointRadius: 0, fill: false },
+                { label: '电流 (A)', data: [], borderColor: '#4FD28E', backgroundColor: 'rgba(79,210,142,0.08)', tension: 0.35, borderWidth: 2, pointRadius: 0, fill: false },
+                { label: '功率 (W)', data: [], borderColor: '#FFB347', backgroundColor: 'rgba(255,179,71,0.08)', tension: 0.35, borderWidth: 2, pointRadius: 0, fill: false }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            animation: false,
+            plugins: {
+                legend: { labels: { color: getCss('--text'), boxWidth: 12, font: { size: 11 } } },
+                tooltip: { backgroundColor: 'rgba(15,21,29,0.95)', borderColor: getCss('--border'), borderWidth: 1 }
+            },
+            scales: {
+                x: { ticks: { color: getCss('--muted'), font: { size: 10 }, maxTicksLimit: 8 }, grid: { color: getCss('--chart-grid') } },
+                y: { ticks: { color: getCss('--muted'), font: { size: 10 } }, grid: { color: getCss('--chart-grid') }, beginAtZero: true }
+            }
+        }
+    });
+}
+function getCss(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+function updateChartTheme() {
+    if (!chart) return;
+    chart.options.plugins.legend.labels.color = getCss('--text');
+    chart.options.scales.x.ticks.color = getCss('--muted');
+    chart.options.scales.y.ticks.color = getCss('--muted');
+    chart.options.scales.x.grid.color = getCss('--chart-grid');
+    chart.options.scales.y.grid.color = getCss('--chart-grid');
+    chart.update('none');
+}
+
+/* ---------- 刷新 UI ---------- */
+function refreshUI() {
+    el.connText.textContent = state.connected
+        ? `${state.port} 已连接 | ${state.baud} bps | 地址 ${state.addr}`
+        : '未连接';
+    el.connBadge.classList.toggle('online', state.connected);
+    el.rateText.textContent = state.rate.toFixed(1) + ' Hz';
+
+    el.vOut.textContent = state.vOut.toFixed(2);
+    el.iOut.textContent = state.iOut.toFixed(3);
+    el.pOut.textContent = state.pOut.toFixed(2);
+    el.vIn.textContent = state.vIn.toFixed(2);
+
+    el.modeVal.textContent = state.mode === 'CV' ? 'CV 恒压' : 'CC 恒流';
+    el.outStat.textContent = state.outputOn ? '开启' : '关闭';
+    el.outStat.className = 'v ' + (state.outputOn ? 'ok' : '');
+    const [ptext, pcls] = protectMap[state.protect];
+    el.protectVal.textContent = ptext;
+    el.protectVal.className = 'v ' + pcls;
+    el.lockStat.textContent = state.locked ? '已锁定' : '未锁定';
+
+    el.tempVal.textContent = state.temp.toFixed(1) + ' °C';
+    el.tempBar.style.width = Math.min(100, Math.max(0, state.temp)) + '%';
+
+    el.maxV.textContent = state.maxV.toFixed(2) + ' V';
+    el.maxI.textContent = state.maxI.toFixed(3) + ' A';
+    el.maxP.textContent = state.maxP.toFixed(2) + ' W';
+
+    /* 输出按钮 */
+    el.outputBtn.textContent = state.outputOn ? '⏻ 关闭输出' : '⏻ 开启输出';
+    el.outputBtn.classList.toggle('on', state.outputOn);
+    el.lockBtn.textContent = state.locked ? '🔓 解锁' : '🔒 锁定';
+
+    el.recIndicator.classList.toggle('active', state.recording);
+    el.recordBtn.textContent = state.recording ? '⏹ 停止记录' : '⏺ 开始记录';
+    el.pauseBtn.textContent = state.chartPaused ? '▶ 继续' : '⏸ 暂停';
+}
+
+/* ---------- 模拟数据循环（无硬件时演示用） ---------- */
+let tickCount = 0, rateStart = Date.now();
+function simulate() {
+    if (!state.connected) { state.rate = 0; refreshUI(); return; }
+    tickCount++;
+    const now = Date.now();
+    if (now - rateStart >= 1000) { state.rate = tickCount * 1000 / (now - rateStart); tickCount = 0; rateStart = now; }
+
+    if (state.outputOn) {
+        /* 模拟带载：电压略低于设定，电流接近设定，随机抖动 */
+        const noise = (Math.random() - 0.5) * 0.1;
+        state.vOut = Math.max(0, state.setV * 0.985 + noise);
+        state.iOut = Math.max(0, state.setC * (0.9 + Math.random() * 0.2) * 0.4);
+        state.pOut = state.vOut * state.iOut;
+        state.mode = state.iOut >= state.setC * 0.95 ? 'CC' : 'CV';
+        state.temp = 32 + state.pOut * 0.4 + Math.random() * 2;
+        /* 偶发模拟保护（演示） */
+        if (Math.random() < 0.002) state.protect = [0,1,2,3][Math.floor(Math.random()*4)];
+        else if (Math.random() < 0.05) state.protect = 0;
+    } else {
+        state.vOut = 0; state.iOut = 0; state.pOut = 0;
+        state.temp = Math.max(28, state.temp - 0.2);
+        state.protect = 0;
+    }
+    state.vIn = 52.0 + (Math.random() - 0.5) * 0.3;
+
+    /* 统计 */
+    state.maxV = Math.max(state.maxV, state.vOut);
+    state.maxI = Math.max(state.maxI, state.iOut);
+    state.maxP = Math.max(state.maxP, state.pOut);
+
+    /* 图表 */
+    if (!state.chartPaused && chart) {
+        const t = new Date();
+        const label = t.toTimeString().slice(0, 8);
+        chart.data.labels.push(label);
+        chart.data.datasets[0].data.push(+state.vOut.toFixed(3));
+        chart.data.datasets[1].data.push(+state.iOut.toFixed(4));
+        chart.data.datasets[2].data.push(+state.pOut.toFixed(3));
+        if (chart.data.labels.length > 100) {
+            chart.data.labels.shift();
+            chart.data.datasets.forEach(d => d.data.shift());
+        }
+        chart.update('none');
+    }
+    refreshUI();
+}
+
+/* ---------- 事件绑定 ---------- */
+el.applyBtn.onclick = () => {
+    state.setV = parseFloat(el.setVoltage.value) || 0;
+    state.setC = parseFloat(el.setCurrent.value) || 0;
+    toast(`已应用设定：${state.setV.toFixed(2)}V / ${state.setC.toFixed(3)}A`, 'success');
+};
+
+el.outputBtn.onclick = () => {
+    if (!state.connected) { toast('设备未连接，请先在串口设置中连接', 'warn'); return; }
+    state.outputOn = !state.outputOn;
+    if (!state.outputOn) { state.maxV = 0; state.maxI = 0; state.maxP = 0; }
+    toast(state.outputOn ? '输出已开启' : '输出已关闭', state.outputOn ? 'success' : 'warn');
+};
+
+el.lockBtn.onclick = () => {
+    state.locked = !state.locked;
+    toast(state.locked ? '键盘已锁定' : '键盘已解锁');
+};
+
+el.recordBtn.onclick = () => {
+    state.recording = !state.recording;
+    toast(state.recording ? '开始记录到 CSV (~/Documents/RD6012_Records/)' : '已停止记录，文件已保存', 'success');
+};
+
+el.pauseBtn.onclick = () => { state.chartPaused = !state.chartPaused; toast(state.chartPaused ? '波形已暂停' : '波形已恢复'); };
+el.clearBtn.onclick = () => {
+    if (chart) { chart.data.labels = []; chart.data.datasets.forEach(d => d.data = []); chart.update(); }
+    state.maxV = 0; state.maxI = 0; state.maxP = 0;
+    toast('历史波形已清空');
+};
+
+el.themeBtn.onclick = () => {
+    state.dark = !state.dark;
+    document.documentElement.setAttribute('data-theme', state.dark ? 'dark' : 'light');
+    el.themeIcon.textContent = state.dark ? '🌙' : '☀';
+    updateChartTheme();
+    toast(state.dark ? '已切换至深色主题' : '已切换至浅色主题');
+};
+
+el.folderBtn.onclick = () => toast('原型演示：此处将打开 CSV 记录文件夹');
+
+/* 弹窗 */
+const modal = $('settingsModal');
+function openModal() { modal.classList.add('show'); }
+function closeModal() { modal.classList.remove('show'); }
+el.settingsBtn.onclick = openModal;
+$('closeModal').onclick = closeModal;
+$('cancelModal').onclick = closeModal;
+$('saveModal').onclick = () => {
+    state.port = $('portSelect').value;
+    state.baud = parseInt($('baudSelect').value);
+    state.addr = parseInt($('addrInput').value) || 1;
+    el.portVal.textContent = state.port;
+    el.baudVal.textContent = state.baud;
+    closeModal();
+    /* 模拟连接 */
+    state.connected = true;
+    el.serialText.textContent = '84201108';
+    el.modelVal.textContent = 'RD6012';
+    el.fwVal.textContent = '1.18';
+    toast(`已连接 ${state.port} @ ${state.baud} bps`, 'success');
+};
+
+/* 快捷键 */
+document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    if (e.code === 'Space') { e.preventDefault(); el.outputBtn.click(); }
+    else if (e.key.toLowerCase() === 'l' && e.ctrlKey) { e.preventDefault(); el.lockBtn.click(); }
+    else if (e.key.toLowerCase() === 's' && e.ctrlKey) { e.preventDefault(); openModal(); }
+});
+
+/* ---------- 启动 ---------- */
+renderPresets();
+makeChart();
+refreshUI();
+setInterval(simulate, 350); /* 与 WPF 350ms 轮询一致 */
+
+/* 首次打开提示 */
+setTimeout(() => toast('原型已就绪 · 点击右上 ⚙串口 模拟连接设备', 'success'), 300);
+</script>
+</body>
+</html>

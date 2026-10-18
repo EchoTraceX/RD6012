@@ -1,0 +1,180 @@
+<Window x:Class="PowerSupplyController.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="连接设置"
+        Icon="Assets/AppIcon.ico"
+        Width="520"
+        Height="520"
+        MinWidth="480"
+        MinHeight="460"
+        FontFamily="Bahnschrift"
+        Background="{DynamicResource BgBrush}"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None"
+        ResizeMode="NoResize">
+    <Window.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        </Style>
+
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource PanelBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrushStrong}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="18"/>
+        </Style>
+
+        <Style x:Key="LabelStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+        </Style>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="{DynamicResource ThemeFieldBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TitleBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ThemeBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,9"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Margin" Value="0,0,0,14"/>
+        </Style>
+
+        <Style TargetType="ComboBox" BasedOn="{StaticResource ThemedComboBoxStyle}">
+            <Setter Property="Background" Value="{DynamicResource ThemeFieldBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TitleBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ThemeBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10,7"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Margin" Value="0,0,0,14"/>
+        </Style>
+
+        <Style x:Key="ActionButtonStyle" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Foreground" Value="{DynamicResource ThemePrimaryButtonForegroundBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource ThemePrimaryButtonBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ThemePrimaryButtonBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="16,10"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ActionBtnBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="14"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="ActionBtnBorder" Storyboard.TargetProperty="Opacity" To="0.85" Duration="0:0:0.15"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="ActionBtnBorder" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.15"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="ActionBtnBorder" Property="Opacity" Value="0.7"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="14">
+        <Border Style="{StaticResource CardStyle}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Background="{DynamicResource ThemeWindowTitleBarBrush}" BorderBrush="{DynamicResource ThemeWindowTitleBarBorderBrush}" BorderThickness="0,0,0,1" CornerRadius="18,18,0,0" Padding="18,14">
+                    <Grid MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="连接设置" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource TitleBrush}"/>
+                            <TextBlock Text="自动连接失败时在这里选择正确的串口与通信参数" Margin="0,6,0,0" Foreground="{DynamicResource MutedBrush}" FontSize="12"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Width="34" Height="28" Background="{DynamicResource ThemeCloseButtonBrush}" BorderBrush="{DynamicResource ThemeCloseButtonBorderBrush}" BorderThickness="1" Click="CloseButton_Click">
+                            <Path Stroke="{DynamicResource TitleBrush}" StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M 2 2 L 10 10 M 10 2 L 2 10"/>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="18,18,18,8">
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="串口号" Style="{StaticResource LabelStyle}" Margin="0,0,0,0"/>
+                            <Button Grid.Column="1" Content="🔄 刷新串口" Style="{StaticResource ActionButtonStyle}" Padding="12,6" FontSize="12" Click="RefreshPortsButton_Click"/>
+                        </Grid>
+                        <ComboBox x:Name="PortComboBox"/>
+
+                        <TextBlock Text="波特率" Style="{StaticResource LabelStyle}"/>
+                        <ComboBox x:Name="BaudRateComboBox" SelectedIndex="4">
+                            <ComboBoxItem Content="9600"/>
+                            <ComboBoxItem Content="19200"/>
+                            <ComboBoxItem Content="38400"/>
+                            <ComboBoxItem Content="57600"/>
+                            <ComboBoxItem Content="115200"/>
+                            <ComboBoxItem Content="230400"/>
+                        </ComboBox>
+
+                        <TextBlock Text="设备地址" Style="{StaticResource LabelStyle}"/>
+                        <TextBox x:Name="DeviceAddressTextBox" Text="1"/>
+
+                        <TextBlock Text="数据位" Style="{StaticResource LabelStyle}"/>
+                        <ComboBox x:Name="DataBitsComboBox" SelectedIndex="1">
+                            <ComboBoxItem Content="7"/>
+                            <ComboBoxItem Content="8"/>
+                        </ComboBox>
+
+                        <TextBlock Text="校验位" Style="{StaticResource LabelStyle}"/>
+                        <ComboBox x:Name="ParityComboBox" SelectedIndex="0">
+                            <ComboBoxItem Content="无"/>
+                            <ComboBoxItem Content="奇校验"/>
+                            <ComboBoxItem Content="偶校验"/>
+                        </ComboBox>
+
+                        <TextBlock Text="停止位" Style="{StaticResource LabelStyle}"/>
+                        <ComboBox x:Name="StopBitsComboBox" SelectedIndex="0">
+                            <ComboBoxItem Content="1"/>
+                            <ComboBoxItem Content="2"/>
+                        </ComboBox>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <Border Grid.Row="2" Background="{DynamicResource ThemeWindowTitleBarBrush}" BorderBrush="{DynamicResource ThemeWindowTitleBarBorderBrush}" BorderThickness="0,1,0,0" CornerRadius="0,0,18,18" Padding="18,14">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="取消" Style="{StaticResource ActionButtonStyle}" Background="{DynamicResource ThemeNeutralButtonBrush}" BorderBrush="{DynamicResource ThemeNeutralButtonBorderBrush}" Foreground="{DynamicResource TextBrush}" Margin="0,0,10,0" Click="CancelButton_Click"/>
+                        <Button Content="✓ 保存并连接" Style="{StaticResource ActionButtonStyle}" Click="SaveButton_Click"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

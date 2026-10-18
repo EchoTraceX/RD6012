@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>RD6012.PowerDesk</AssemblyName>
+    <RootNamespace>RD6012.PowerDesk</RootNamespace>
+    <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4258.31" />
+    <PackageReference Include="ModelContextProtocol.AspNetCore" Version="2.2.0" />
+    <PackageReference Include="System.IO.Ports" Version="10.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Reuse the proven serial + MCP backend from the existing app without pulling in its WPF/LiveCharts UI. -->
+    <Compile Include="..\PowerSupplyController\Models.cs" Link="Backend\Models.cs" />
+    <Compile Include="..\PowerSupplyController\ModbusRtuClient.cs" Link="Backend\ModbusRtuClient.cs" />
+    <Compile Include="..\PowerSupplyController\SerialPortDiscovery.cs" Link="Backend\SerialPortDiscovery.cs" />
+    <Compile Include="..\PowerSupplyController\DiagnosticLogger.cs" Link="Backend\DiagnosticLogger.cs" />
+    <Compile Include="..\PowerSupplyController\MainViewModel.cs" Link="Backend\MainViewModel.cs" />
+    <Compile Include="..\PowerSupplyController\Mcp\*.cs" Link="Backend\Mcp\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="web\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\AppIcon.ico" />
+  </ItemGroup>
+
+</Project>

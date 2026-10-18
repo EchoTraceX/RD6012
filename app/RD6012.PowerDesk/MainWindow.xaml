@@ -1,0 +1,30 @@
+<Window x:Class="RD6012.PowerDesk.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:RD6012.PowerDesk"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        mc:Ignorable="d"
+        Title="RD6012 Power Desk"
+        Width="1420"
+        Height="920"
+        MinWidth="1100"
+        MinHeight="720"
+        WindowStyle="None"
+        ResizeMode="CanResize"
+        Background="#06080B"
+        WindowStartupLocation="CenterScreen"
+        StateChanged="Window_StateChanged">
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="0"
+                            ResizeBorderThickness="6"
+                            CornerRadius="0"
+                            GlassFrameThickness="0"
+                            UseAeroCaptionButtons="False"/>
+    </shell:WindowChrome.WindowChrome>
+    <Grid x:Name="WindowRoot" Background="#06080B">
+        <wv2:WebView2 x:Name="WebView" Margin="0" />
+    </Grid>
+</Window>

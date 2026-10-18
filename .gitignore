@@ -1,0 +1,20 @@
+# .NET build output
+**/bin/
+**/obj/
+**/TestResults/
+
+# Local publish / backup outputs
+release/
+artifacts/
+
+# IDE
+.vs/
+.idea/
+*.user
+*.suo
+
+# Temporary / OS
+*.log
+*.tmp
+Thumbs.db
+.DS_Store
